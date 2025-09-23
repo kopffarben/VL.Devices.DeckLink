@@ -1,0 +1,42 @@
+[Category("Filter")]
+[Summary("")]
+shader YUV2RGB_TextureFX : FilterBase
+{
+    stage override float4 Shading()
+    {
+        
+
+	    uint pixel = streams.TexCoord.x / (Texture0TexelSize.x); // 0 - 1920 
+	    bool rightPixel = pixel % 2 == 0; 
+
+        float4 uyvy = Texture0.Sample(PointSampler, streams.TexCoord.xy );
+	    float y1 = uyvy.a;
+	    float y2 = uyvy.g;
+	    float u = uyvy.b;
+	    float v = uyvy.r;
+	
+	    float y = rightPixel ? y2 : y1;
+	
+	    float c = y - (16.0f / 256.0f);
+	    float d = u - 0.5f;
+	    float e = v - 0.5;
+	
+        float4 col;
+	    col.r = 1.164383 * c + 1.792741 * e;
+	    col.g = 1.164383 * c - (0.213249 * d) - (0.532909 * e);
+	    col.b = 1.164383 * c +  2.112402 * d;
+	    col.a = 1.0f;
+
+        // The render pipeline expects a linear color space
+        return float4(ToLinear(col.r), ToLinear(col.g), ToLinear(col.b), col.a);
+    }
+
+    // There're faster approximations, see http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
+    float ToLinear(float C_srgb)
+    {
+        if (C_srgb <= 0.04045)
+            return C_srgb / 12.92;
+        else
+            return pow((C_srgb + 0.055) / 1.055, 2.4);
+    }
+};

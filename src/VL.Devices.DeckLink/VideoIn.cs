@@ -510,76 +510,12 @@ namespace VL.Devices.DeckLink
 
             string GetShaderSource()
             {
-                // https://docs.microsoft.com/en-us/windows/win32/medfound/recommended-8-bit-yuv-formats-for-video-rendering#converting-8-bit-yuv-to-rgb888
-                // https://support.medialooks.com/hc/en-us/articles/360030737152-Color-correction-with-matrix-transformation
-                // https://forum.blackmagicdesign.com/viewtopic.php?f=12&t=29413 
-
-                string s = default;
-                switch (conversion)
-                {
-                    case Colorspace.BT601:
-                        s = @"
-	    float4 col;
-	    col.r = 1.164383 * c + 1.596027 * e;
-	    col.g = 1.164383 * c - (0.391762 * d) - (0.812968 * e);
-	    col.b = 1.164383 * c +  2.017232 * d;
-	    col.a = 1.0f;
-";
-                        break;
-                    case Colorspace.BT709:
-                        s = @"
-	    float4 col;
-	    col.r = 1.164383 * c + 1.792741 * e;
-	    col.g = 1.164383 * c - (0.213249 * d) - (0.532909 * e);
-	    col.b = 1.164383 * c +  2.112402 * d;
-	    col.a = 1.0f;
-";
-                        break;
-                    case Colorspace.BT2020:
-                        s = @"
-	    float4 col;
-	    col.r = 1.164383 * c + 1.717000 * e;
-	    col.g = 1.164383 * c - (0.191603 * d) - (0.665274 * e);
-	    col.b = 1.164383 * c +  2.190671 * d;
-	    col.a = 1.0f;
-";
-                        break;
-                    default:
-                        break;
-                }
                 return @"
 shader YUV2RGB : ImageEffectShader
 {
     stage override float4 Shading()
     {
-	    uint pixel = streams.TexCoord.x / (2 * Texture0TexelSize.x);
-	    bool rightPixel = pixel % 2 == 0;
-	
-        float4 uyvy = Texture0.Sample(PointSampler, streams.TexCoord);
-	    float y1 = uyvy.a;
-	    float y2 = uyvy.g;
-	    float u = uyvy.b;
-	    float v = uyvy.r;
-	
-	    float y = rightPixel ? y2 : y1;
-	
-	    float c = y - (16.0f / 256.0f);
-	    float d = u - 0.5f;
-	    float e = v - 0.5;
-	
-" + s + @"
-	
-        // The render pipeline expects a linear color space
-        return float4(ToLinear(col.r), ToLinear(col.g), ToLinear(col.b), col.a);
-    }
-
-    // There're faster approximations, see http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
-    float ToLinear(float C_srgb)
-    {
-        if (C_srgb <= 0.04045)
-            return C_srgb / 12.92;
-        else
-            return pow((C_srgb + 0.055) / 1.055, 2.4);
+        return Texture0.Sample(PointSampler, streams.TexCoord);
     }
 };
 ";
