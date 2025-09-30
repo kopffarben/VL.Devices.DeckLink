@@ -512,7 +512,7 @@ namespace VL.Devices.DeckLink
             {
                 return @"
 shader YUV2RGB : ImageEffectShader
-{
+{ 
     stage override float4 Shading()
     {
         return Texture0.Sample(PointSampler, streams.TexCoord);
