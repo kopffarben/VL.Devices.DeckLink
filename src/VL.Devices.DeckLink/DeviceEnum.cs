@@ -48,16 +48,12 @@ namespace VL.Devices.DeckLink
             {
                 
             }
-            // native dll not found
-            catch (DllNotFoundException ex)
+            // all other
+            catch (Exception ex)
             {
                
             }
-            // Interop load problem
-            catch (TypeLoadException ex)
-            {
-
-            }
+            
 
             // Add a default entry which makes it up to the system to select a device
             if (devices.Count > 0)
